@@ -888,11 +888,12 @@ class InspectedRowPolicy(Inspected, TableRelated):
 
 
 class InspectedRole(Inspected):
-    def __init__(self, name, superuser, createdb, inherit, login, replication, bypassrls,
+    def __init__(self, name, superuser, createdb, createrole, inherit, login, replication, bypassrls,
                  connection_limit, password, valid_until):
         self.name = name
         self.superuser = superuser
         self.createdb = createdb
+        self.createrole = createrole
         self.inherit = inherit
         self.login = login
         self.replication = replication
@@ -907,10 +908,11 @@ class InspectedRole(Inspected):
 
     @property
     def create_statement(self):
-        return "create role {} with {} {} {} {} {} {} connection limit {} password {} {};".format(
+        return "create role {} with {} {} {} {} {} {} {} connection limit {} password {} {};".format(
             self.name,
             self.superuser,
             self.createdb,
+            self.createrole,
             self.inherit,
             self.login,
             self.replication,
@@ -922,10 +924,11 @@ class InspectedRole(Inspected):
 
     @property
     def update_statement(self):
-        return "alter role {} with {} {} {} {} {} {} connection limit {} password {} {};".format(
+        return "alter role {} with {} {} {} {} {} {} {} connection limit {} password {} {};".format(
             self.name,
             self.superuser,
             self.createdb,
+            self.createrole,
             self.inherit,
             self.login,
             self.replication,
@@ -940,6 +943,7 @@ class InspectedRole(Inspected):
             self.name == other.name,
             self.superuser == other.superuser,
             self.createdb == other.createdb,
+            self.createrole == other.createrole,
             self.inherit == other.inherit,
             self.login == other.login,
             self.replication == other.replication,
@@ -1085,6 +1089,7 @@ class PostgreSQL(DBInspector):
                 name=r.name,
                 superuser=r.superuser,
                 createdb=r.createdb,
+                createrole=r.createrole,
                 inherit=r.inherit,
                 login=r.login,
                 replication=r.replication,
