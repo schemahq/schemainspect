@@ -908,7 +908,7 @@ class InspectedRole(Inspected):
 
     @property
     def create_statement(self):
-        return "create role {} with {} {} {} {} {} {} {} {} {} password {} {};".format(
+        return "create role {} with {} {} {} {} {} {} {} {} password {} {};".format(
             self.name,
             self.superuser,
             self.createdb,
@@ -924,7 +924,7 @@ class InspectedRole(Inspected):
 
     @property
     def update_statement(self):
-        return "alter role {} with {} {} {} {} {} {} {} {} {} password {} {};".format(
+        return "alter role {} with {} {} {} {} {} {} {} {} password {} {};".format(
             self.name,
             self.superuser,
             self.createdb,
