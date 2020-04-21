@@ -908,7 +908,7 @@ class InspectedRole(Inspected):
 
     @property
     def create_statement(self):
-        return "create role {} with {} {} {} {} {} {} {} connection limit {} password {} {};".format(
+        return "create role {} with {} {} {} {} {} {} {} {} {} password {} {};".format(
             self.name,
             self.superuser,
             self.createdb,
@@ -917,14 +917,14 @@ class InspectedRole(Inspected):
             self.login,
             self.replication,
             self.bypassrls,
-            self.connection_limit,
+            "connection limit {}".format(self.connection_limit) if self.connection_limit != -1 else "",
             ("'" + self.password + "'") if self.password else 'NULL',
             " valid until {}".format(self.valid_until) if self.valid_until else "",
         )
 
     @property
     def update_statement(self):
-        return "alter role {} with {} {} {} {} {} {} {} connection limit {} password {} {};".format(
+        return "alter role {} with {} {} {} {} {} {} {} {} {} password {} {};".format(
             self.name,
             self.superuser,
             self.createdb,
@@ -933,7 +933,7 @@ class InspectedRole(Inspected):
             self.login,
             self.replication,
             self.bypassrls,
-            self.connection_limit,
+            "connection limit {}".format(self.connection_limit) if self.connection_limit != -1 else "",
             ("'" + self.password + "'") if self.password else 'NULL',
             " valid until {}".format(self.valid_until) if self.valid_until else "",
         )
