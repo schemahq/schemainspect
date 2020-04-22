@@ -5,6 +5,9 @@ authors = [ "Robert Lechte <robertlechte@gmail.com>",]
 license = "Unlicense"
 readme = "README.md"
 description = "Schema inspection for PostgreSQL (and possibly others)"
+packages = [
+    { include = "schemainspect" }
+]
 
 repository = "https://github.com/djrobstep/schemainspect"
 homepage = "https://github.com/djrobstep/schemainspect"
