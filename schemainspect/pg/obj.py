@@ -891,7 +891,6 @@ class InspectedRole(Inspected):
     def __init__(
         self,
         name,
-        superuser,
         createdb,
         createrole,
         inherit,
@@ -899,11 +898,9 @@ class InspectedRole(Inspected):
         replication,
         bypassrls,
         connection_limit,
-        password,
         valid_until,
     ):
         self.name = name
-        self.superuser = superuser
         self.createdb = createdb
         self.createrole = createrole
         self.inherit = inherit
@@ -911,7 +908,6 @@ class InspectedRole(Inspected):
         self.replication = replication
         self.bypassrls = bypassrls
         self.connection_limit = connection_limit
-        self.password = password
         self.valid_until = valid_until
 
     @property
@@ -920,9 +916,8 @@ class InspectedRole(Inspected):
 
     @property
     def create_statement(self):
-        return "create role {} with {} {} {} {} {} {} {} {} password {} {};".format(
+        return "create role {} with {} {} {} {} {} {} {} {};".format(
             self.name,
-            self.superuser,
             self.createdb,
             self.createrole,
             self.inherit,
@@ -932,15 +927,13 @@ class InspectedRole(Inspected):
             "connection limit {}".format(self.connection_limit)
             if self.connection_limit != -1
             else "",
-            ("'" + self.password + "'") if self.password else "NULL",
             " valid until {}".format(self.valid_until) if self.valid_until else "",
         )
 
     @property
     def update_statement(self):
-        return "alter role {} with {} {} {} {} {} {} {} {} password {} {};".format(
+        return "alter role {} with {} {} {} {} {} {} {} {};".format(
             self.name,
-            self.superuser,
             self.createdb,
             self.createrole,
             self.inherit,
@@ -950,14 +943,12 @@ class InspectedRole(Inspected):
             "connection limit {}".format(self.connection_limit)
             if self.connection_limit != -1
             else "",
-            ("'" + self.password + "'") if self.password else "NULL",
             " valid until {}".format(self.valid_until) if self.valid_until else "",
         )
 
     def __eq__(self, other):
         equalities = (
             self.name == other.name,
-            self.superuser == other.superuser,
             self.createdb == other.createdb,
             self.createrole == other.createrole,
             self.inherit == other.inherit,
@@ -965,7 +956,6 @@ class InspectedRole(Inspected):
             self.replication == other.replication,
             self.bypassrls == other.bypassrls,
             self.connection_limit == other.connection_limit,
-            self.password == other.password,
             self.valid_until == other.valid_until,
         )
         return all(equalities)

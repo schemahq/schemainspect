@@ -1,11 +1,6 @@
 select
   oid,
   rolname as name,
-  case rolsuper when true then
-    'SUPERUSER'
-  else
-    'NOSUPERUSER'
-  end as superuser,
   case rolinherit when true then
     'INHERIT'
   else
@@ -37,7 +32,6 @@ select
     'NOBYPASSRLS'
   end as bypassrls,
   rolconnlimit as connection_limit,
-  rolpassword as password,
   rolvaliduntil as valid_until
 from pg_roles
 where
