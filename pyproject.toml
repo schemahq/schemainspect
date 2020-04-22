@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "schemainspect"
+name = "schemahq-schemainspect"
 version = "0.1"
 authors = [ "Robert Lechte <robertlechte@gmail.com>",]
 license = "Unlicense"
@@ -21,7 +21,6 @@ pytest-cov = "*"
 psycopg2-binary = "*"
 flake8 = "*"
 isort = "*"
-migra = "*"
 black = { version = ">=19.10b0", python=">=3.6" }
 
 [tool.isort]
