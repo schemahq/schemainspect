@@ -33,6 +33,7 @@ EXTENSIONS_QUERY = resource_text("sql/extensions.sql")
 ENUMS_QUERY = resource_text("sql/enums.sql")
 DEPS_QUERY = resource_text("sql/deps.sql")
 PRIVILEGES_QUERY = resource_text("sql/privileges.sql")
+SCHEMA_PRIVILEGES_QUERY = resource_text("sql/schema-privileges.sql")
 TRIGGERS_QUERY = resource_text("sql/triggers.sql")
 COLLATIONS_QUERY = resource_text("sql/collations.sql")
 COLLATIONS_QUERY_9 = resource_text("sql/collations9.sql")
@@ -808,6 +809,58 @@ class InspectedPrivilege(Inspected):
         return self.object_type, self.quoted_full_name, self.target_user, self.privilege
 
 
+class InspectedSchemaPrivilege(Inspected):
+    def __init__(self, schema, target_user, create, usage):
+        self.schema = schema
+        self.target_user = target_user
+        self.create = create
+        self.usage = usage
+
+    @property
+    def quoted_target_user(self):
+        return quoted_identifier(self.target_user)
+
+    @property
+    def privileges(self):
+        if self.create and self.usage:
+            return "ALL"
+        elif self.create:
+            return "CREATE"
+        elif self.usage:
+            return "USAGE"
+
+    @property
+    def drop_statement(self):
+        return "revoke {} on schema {} from {};".format(
+            self.privileges,
+            self.schema,
+            self.quoted_target_user,
+        )
+
+    @property
+    def create_statement(self):
+        if self.create or self.usage:
+            return "grant {} on schema {} to {};".format(
+                self.privileges,
+                self.schema,
+                self.quoted_target_user,
+            )
+        return ""
+
+    def __eq__(self, other):
+        equalities = (
+            self.schema == other.schema,
+            self.target_user == other.target_user,
+            self.create == other.create,
+            self.usage == other.usage,
+        )
+        return all(equalities)
+
+    @property
+    def key(self):
+        return self.schema, self.target_user, self.create, self.usage
+
+
 RLS_POLICY_CREATE = """create policy {name}
 on {table_name}
 as {permissiveness}
@@ -1036,6 +1089,7 @@ class PostgreSQL(DBInspector):
         self.DEPS_QUERY = processed(DEPS_QUERY)
         self.SCHEMAS_QUERY = processed(SCHEMAS_QUERY)
         self.PRIVILEGES_QUERY = processed(PRIVILEGES_QUERY)
+        self.SCHEMA_PRIVILEGES_QUERY = processed(SCHEMA_PRIVILEGES_QUERY)
         self.TRIGGERS_QUERY = processed(TRIGGERS_QUERY)
         self.ROLES_QUERY = processed(ROLES_QUERY)
         self.MEMBERSHIPS_QUERY = processed(MEMBERSHIPS_QUERY)
@@ -1051,6 +1105,7 @@ class PostgreSQL(DBInspector):
         self.load_deps()
         self.load_deps_all()
         self.load_privileges()
+        self.load_schema_privileges()
         self.load_triggers()
         self.load_collations()
         self.load_rlspolicies()
@@ -1151,6 +1206,19 @@ class PostgreSQL(DBInspector):
             for i in q
         ]
         self.privileges = od((i.key, i) for i in privileges)
+
+    def load_schema_privileges(self):
+        q = self.c.execute(self.SCHEMA_PRIVILEGES_QUERY)
+        schema_privileges = [
+            InspectedSchemaPrivilege(
+                schema=i.schema,
+                target_user=i.user,
+                create=i.create,
+                usage=i.usage,
+            )
+            for i in q
+        ]
+        self.schema_privileges = od((i.key, i) for i in schema_privileges)
 
     def load_deps(self):
         q = self.c.execute(self.DEPS_QUERY)
