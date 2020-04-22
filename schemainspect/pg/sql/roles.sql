@@ -39,8 +39,9 @@ select
   rolconnlimit as connection_limit,
   rolpassword as password,
   rolvaliduntil as valid_until
-from pg_authid
+from pg_roles
 where
   rolsuper = false
   and rolname not like 'pg_%'
+  and rolname not like 'rds%'
 order by rolname;
