@@ -555,7 +555,7 @@ class InspectedSchema(Inspected):
 
     @property
     def drop_statement(self):
-        return "drop schema if exists {};".format(self.quoted_schema)
+        return "drop schema if exists {} cascade;".format(self.quoted_schema)
 
     def __eq__(self, other):
         return self.schema == other.schema
