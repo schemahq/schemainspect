@@ -1093,7 +1093,6 @@ class PostgreSQL(DBInspector):
         roles = [
             InspectedRole(
                 name=r.name,
-                superuser=r.superuser,
                 createdb=r.createdb,
                 createrole=r.createrole,
                 inherit=r.inherit,
@@ -1101,7 +1100,6 @@ class PostgreSQL(DBInspector):
                 replication=r.replication,
                 bypassrls=r.bypassrls,
                 connection_limit=r.connection_limit,
-                password=r.password,
                 valid_until=r.valid_until,
             )
             for r in q
