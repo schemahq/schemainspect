@@ -4,9 +4,11 @@ select
   a.admin_option,
   ug.rolname as grantor
 from pg_auth_members a
-left join pg_authid ur on ur.oid = a.roleid
-left join pg_authid ug on ug.oid = a.grantor
-left join pg_authid um on um.oid = a.member
+left join pg_roles ur on ur.oid = a.roleid
+left join pg_roles ug on ug.oid = a.grantor
+left join pg_roles um on um.oid = a.member
 where
-  not (ur.rolname ~ '^pg_' and um.rolname ~ '^pg_')
-order by 1, 2, 3;
+    ur.rolname not like 'pg_%'
+    and um.rolname not like 'pg_%'
+    and ur.rolname not like 'rds%'
+    and um.rolname not like 'rds%';
