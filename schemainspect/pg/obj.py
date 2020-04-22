@@ -832,18 +832,14 @@ class InspectedSchemaPrivilege(Inspected):
     @property
     def drop_statement(self):
         return "revoke {} on schema {} from {};".format(
-            self.privileges,
-            self.schema,
-            self.quoted_target_user,
+            self.privileges, self.schema, self.quoted_target_user,
         )
 
     @property
     def create_statement(self):
         if self.create or self.usage:
             return "grant {} on schema {} to {};".format(
-                self.privileges,
-                self.schema,
-                self.quoted_target_user,
+                self.privileges, self.schema, self.quoted_target_user,
             )
         return ""
 
@@ -1211,10 +1207,7 @@ class PostgreSQL(DBInspector):
         q = self.c.execute(self.SCHEMA_PRIVILEGES_QUERY)
         schema_privileges = [
             InspectedSchemaPrivilege(
-                schema=i.schema,
-                target_user=i.user,
-                create=i.create,
-                usage=i.usage,
+                schema=i.schema, target_user=i.user, create=i.create, usage=i.usage,
             )
             for i in q
         ]
