@@ -34,6 +34,7 @@ ENUMS_QUERY = resource_text("sql/enums.sql")
 DEPS_QUERY = resource_text("sql/deps.sql")
 PRIVILEGES_QUERY = resource_text("sql/privileges.sql")
 SCHEMA_PRIVILEGES_QUERY = resource_text("sql/schema-privileges.sql")
+SEQUENCE_PRIVILEGES_QUERY = resource_text("sql/sequence-privileges.sql")
 TRIGGERS_QUERY = resource_text("sql/triggers.sql")
 COLLATIONS_QUERY = resource_text("sql/collations.sql")
 COLLATIONS_QUERY_9 = resource_text("sql/collations9.sql")
@@ -860,6 +861,43 @@ class InspectedSchemaPrivilege(Inspected):
         return self.schema, self.target_user, self.create, self.usage
 
 
+class InspectedSequencePrivilege(Inspected, TableRelated):
+    def __init__(self, table_name, schema, target_user, permission):
+        self.table_name = table_name
+        self.schema = schema
+        self.target_user = target_user
+        self.permission = permission
+
+    @property
+    def quoted_target_user(self):
+        return quoted_identifier(self.target_user)
+
+    @property
+    def drop_statement(self):
+        return "revoke {} on sequence {} from {};".format(
+            self.permission, self.quoted_full_table_name, self.quoted_target_user,
+        )
+
+    @property
+    def create_statement(self):
+        return "grant {} on sequence {} to {};".format(
+            self.permission, self.quoted_full_table_name, self.quoted_target_user,
+        )
+
+    def __eq__(self, other):
+        equalities = (
+            self.table_name == other.table_name,
+            self.schema == other.schema,
+            self.target_user == other.target_user,
+            self.permission == other.permission,
+        )
+        return all(equalities)
+
+    @property
+    def key(self):
+        return self.table_name, self.schema, self.target_user, self.permission
+
+
 RLS_POLICY_CREATE = """create policy {name}
 on {table_name}
 as {permissiveness}
@@ -1089,6 +1127,7 @@ class PostgreSQL(DBInspector):
         self.SCHEMAS_QUERY = processed(SCHEMAS_QUERY)
         self.PRIVILEGES_QUERY = processed(PRIVILEGES_QUERY)
         self.SCHEMA_PRIVILEGES_QUERY = processed(SCHEMA_PRIVILEGES_QUERY)
+        self.SEQUENCE_PRIVILEGES_QUERY = processed(SEQUENCE_PRIVILEGES_QUERY)
         self.TRIGGERS_QUERY = processed(TRIGGERS_QUERY)
         self.ROLES_QUERY = processed(ROLES_QUERY)
         self.MEMBERSHIPS_QUERY = processed(MEMBERSHIPS_QUERY)
@@ -1105,6 +1144,7 @@ class PostgreSQL(DBInspector):
         self.load_deps_all()
         self.load_privileges()
         self.load_schema_privileges()
+        self.load_sequence_privileges()
         self.load_triggers()
         self.load_collations()
         self.load_rlspolicies()
@@ -1215,6 +1255,16 @@ class PostgreSQL(DBInspector):
             for i in q
         ]
         self.schema_privileges = od((i.key, i) for i in schema_privileges)
+
+    def load_sequence_privileges(self):
+        q = self.c.execute(self.SEQUENCE_PRIVILEGES_QUERY)
+        sequence_privileges = [
+            InspectedSequencePrivilege(
+                table_name=i.name, schema=i.schema, target_user=i.user, permission=i.permission,
+            )
+            for i in q
+        ]
+        self.sequence_privileges = od((i.key, i) for i in sequence_privileges)
 
     def load_deps(self):
         q = self.c.execute(self.DEPS_QUERY)
