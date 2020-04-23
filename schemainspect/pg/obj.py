@@ -1260,7 +1260,10 @@ class PostgreSQL(DBInspector):
         q = self.c.execute(self.SEQUENCE_PRIVILEGES_QUERY)
         sequence_privileges = [
             InspectedSequencePrivilege(
-                table_name=i.name, schema=i.schema, target_user=i.user, permission=i.permission,
+                table_name=i.name,
+                schema=i.schema,
+                target_user=i.user,
+                permission=i.permission,
             )
             for i in q
         ]
