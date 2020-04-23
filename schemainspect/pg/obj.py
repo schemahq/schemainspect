@@ -831,9 +831,12 @@ class InspectedSchemaPrivilege(Inspected):
 
     @property
     def drop_statement(self):
-        return "revoke {} on schema {} from {};".format(
-            self.privileges, self.schema, self.quoted_target_user,
-        )
+        if self.create or self.usage:
+            return "revoke {} on schema {} from {};".format(
+                self.privileges, self.schema, self.quoted_target_user,
+            )
+        else:
+            return ""
 
     @property
     def create_statement(self):
