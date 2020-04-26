@@ -35,6 +35,7 @@ DEPS_QUERY = resource_text("sql/deps.sql")
 PRIVILEGES_QUERY = resource_text("sql/privileges.sql")
 SCHEMA_PRIVILEGES_QUERY = resource_text("sql/schema-privileges.sql")
 SEQUENCE_PRIVILEGES_QUERY = resource_text("sql/sequence-privileges.sql")
+COLUMN_PRIVILEGES_QUERY = resource_text("sql/column-privileges.sql")
 TRIGGERS_QUERY = resource_text("sql/triggers.sql")
 COLLATIONS_QUERY = resource_text("sql/collations.sql")
 COLLATIONS_QUERY_9 = resource_text("sql/collations9.sql")
@@ -898,6 +899,61 @@ class InspectedSequencePrivilege(Inspected, TableRelated):
         return self.table_name, self.schema, self.target_user, self.permission
 
 
+class InspectedColumnPrivilege(Inspected, TableRelated):
+    def __init__(self, table_name, column_name, schema, target_user, privilege):
+        self.table_name = table_name
+        self.column_name = column_name
+        self.schema = schema
+        self.target_user = target_user
+        self.privilege = privilege
+
+    @property
+    def quoted_target_user(self):
+        return quoted_identifier(self.target_user)
+
+    @property
+    def quoted_column_name(self):
+        return quoted_identifier(self.column_name)
+
+    @property
+    def drop_statement(self):
+        return "revoke {} ({}) on {} from {};".format(
+            self.privilege,
+            self.quoted_column_name,
+            self.quoted_full_table_name,
+            self.quoted_target_user,
+        )
+
+    @property
+    def create_statement(self):
+        return "grant {} ({}) on {} to {};".format(
+            self.privilege,
+            self.quoted_column_name,
+            self.quoted_full_table_name,
+            self.quoted_target_user,
+        )
+
+    def __eq__(self, other):
+        equalities = (
+            self.table_name == other.table_name,
+            self.column_name == other.column_name,
+            self.schema == other.schema,
+            self.target_user == other.target_user,
+            self.privilege == other.privilege,
+        )
+        return all(equalities)
+
+    @property
+    def key(self):
+        return (
+            self.table_name,
+            self.column_name,
+            self.schema,
+            self.target_user,
+            self.privilege,
+        )
+
+
 RLS_POLICY_CREATE = """create policy {name}
 on {table_name}
 as {permissiveness}
@@ -1128,6 +1184,7 @@ class PostgreSQL(DBInspector):
         self.PRIVILEGES_QUERY = processed(PRIVILEGES_QUERY)
         self.SCHEMA_PRIVILEGES_QUERY = processed(SCHEMA_PRIVILEGES_QUERY)
         self.SEQUENCE_PRIVILEGES_QUERY = processed(SEQUENCE_PRIVILEGES_QUERY)
+        self.COLUMN_PRIVILEGES_QUERY = processed(COLUMN_PRIVILEGES_QUERY)
         self.TRIGGERS_QUERY = processed(TRIGGERS_QUERY)
         self.ROLES_QUERY = processed(ROLES_QUERY)
         self.MEMBERSHIPS_QUERY = processed(MEMBERSHIPS_QUERY)
@@ -1145,6 +1202,7 @@ class PostgreSQL(DBInspector):
         self.load_privileges()
         self.load_schema_privileges()
         self.load_sequence_privileges()
+        self.load_column_privileges()
         self.load_triggers()
         self.load_collations()
         self.load_rlspolicies()
@@ -1268,6 +1326,20 @@ class PostgreSQL(DBInspector):
             for i in q
         ]
         self.sequence_privileges = od((i.key, i) for i in sequence_privileges)
+
+    def load_column_privileges(self):
+        q = self.c.execute(self.COLUMN_PRIVILEGES_QUERY)
+        column_privileges = [
+            InspectedColumnPrivilege(
+                table_name=i.table_name,
+                column_name=i.column_name,
+                schema=i.schema,
+                target_user=i.user,
+                privilege=i.privilege,
+            )
+            for i in q
+        ]
+        self.column_privileges = od((i.key, i) for i in column_privileges)
 
     def load_deps(self):
         q = self.c.execute(self.DEPS_QUERY)
