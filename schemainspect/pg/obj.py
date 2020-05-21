@@ -310,7 +310,10 @@ class InspectedFunction(InspectedSelectable):
         return (
             self.signature == other.signature
             and self.result_string == other.result_string
-            and self.definition.translate(trans).lower() == other.definition.translate(trans).lower()
+            and (
+                self.definition.translate(trans).lower()
+                == other.definition.translate(trans).lower()
+            )
             and self.language == other.language
             and self.volatility == other.volatility
             and self.strictness == other.strictness
