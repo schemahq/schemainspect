@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from collections import OrderedDict as od
 from itertools import groupby
+import string
 
 from sqlalchemy import text
 
@@ -304,10 +305,12 @@ class InspectedFunction(InspectedSelectable):
         return "drop function if exists {};".format(self.signature)
 
     def __eq__(self, other):
+        trans = str.maketrans(dict.fromkeys(string.whitespace))
+
         return (
             self.signature == other.signature
             and self.result_string == other.result_string
-            and self.definition == other.definition
+            and self.definition.translate(trans).lower() == other.definition.translate(trans).lower()
             and self.language == other.language
             and self.volatility == other.volatility
             and self.strictness == other.strictness
