@@ -36,6 +36,6 @@ select
 from pg_roles
 where
   rolsuper = false
-  and rolname not like 'pg_%'
+  and rolname not like 'pg\_%'
   and rolname not like 'rds%'
 order by rolname;
